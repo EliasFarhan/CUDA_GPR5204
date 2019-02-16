@@ -29,7 +29,7 @@ foreach(course_file ${COURSE_FILES} )
     # I used a simple string replace, to cut off .cpp.
     file(RELATIVE_PATH course_relative_path ${COURSE_DIR} ${course_file})
     string( REPLACE ".cpp" "" course_name ${course_relative_path} )
-    add_executable(${course_name} ${course_file} ${SRC_FILES} ${COURSE_GRAPHICS_FILES})
+    add_executable(${course_name} ${course_file} ${SRC_FILES} ${COURSE_GRAPHICS_FILES} tests/test_cuda.cpp)
     # Make sure YourLib is linked to each app
     target_link_libraries(${course_name} PUBLIC benchmark)
 	
@@ -40,7 +40,7 @@ foreach(course_file ${COURSE_FILES} )
 	IF(MSVC)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:AVX2 /Oi")
     elseif(UNIX)
-    set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps -ffast-math -march=native")
+    set_target_properties(${course_name} PROPERTIES COMPILE_FLAGS "-save-temps")
     ENDIF(MSVC)
     set_target_properties (${course_name} PROPERTIES
         FOLDER Courses)
