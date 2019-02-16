@@ -49,6 +49,7 @@ float MultLocal16(const float * const m1, const float * const m2, const int widt
 float MultLocal32(const float * const m1, const float * const m2, const int width);
 
 float dotGpu(const float *x1, const float *x2, size_t len);
+void matrixMultGpu(const float* m1, const float* m2, float* result, const size_t newWidth, const size_t newHeight, const size_t len);
 
 float MultOpti(const float* const m1, const float* const m2, const int width);
 #ifdef __SSE__

@@ -1,3 +1,4 @@
+#include <cstdio>
 __global__
 void print_values()
 {

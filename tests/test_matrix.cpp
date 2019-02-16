@@ -113,6 +113,23 @@ public:
         return Matrix(0, 0);
       }
   }
+  Matrix MultGpu(const Matrix& m2T) const
+	{
+	  const int localWidth = width;
+	  if (localWidth == m2T.width)
+	  {
+		  Matrix newMatrix(m2T.width, height);
+		  const int newWidth = newMatrix.width;
+		  const int newHeight = newMatrix.height;
+		  matrixMultGpu(values.data(), m2T.values.data(), newMatrix.values.data(), newWidth, newHeight, localWidth);
+		  return newMatrix;
+	  }
+	  else
+	  {
+		  return Matrix(0, 0);
+	  }
+	}
+
 
 private:
 	int width = 0;
@@ -154,6 +171,24 @@ static void BM_MatrixMultOptimize(benchmark::State& state) {
 	}
 }
 BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512, 512})->Args({1024, 1024});
+
+static void BM_MatrixMultGpu(benchmark::State& state) {
+
+	for (auto _ : state)
+	{
+		state.PauseTiming();
+		Matrix m1(state.range(0) + 1, state.range(1) + 1);
+		m1.Prefill();
+		Matrix m2(state.range(1) + 1, state.range(0) + 1);
+		m2.Prefill();
+		state.ResumeTiming();
+
+		const Matrix m2T = m2.Transpose();
+		benchmark::DoNotOptimize(m1.MultGpu(m2T));
+	}
+}
+BENCHMARK(BM_MatrixMultGpu)->Args({ 64,64 })->Args({ 128,128 })->Args({ 256,256 })->Args({ 512, 512 })->Args({ 1024, 1024 });
+
 
 BENCHMARK_MAIN();
 

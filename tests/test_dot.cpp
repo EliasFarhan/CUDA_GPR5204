@@ -7,7 +7,7 @@
 
 
 const int fromRange = 16;
-const int toRange = 1 << 15;
+const int toRange = 1 << 20;
 
 static void BM_CpuDot(benchmark::State& state)
 {
@@ -39,13 +39,13 @@ static void BM_GpuDot(benchmark::State& state)
 
 	float error = 0.0f;
 	float answer = MultLocal(v1.data(), v2.data(), state.range(0));
-
+	float result = 0.0f;
 	for (auto _ : state)
 	{
 
 		auto start = std::chrono::high_resolution_clock::now();
 		
-		const float result = dotGpu(v1.data(), v2.data(), state.range(0));
+		result = dotGpu(v1.data(), v2.data(), state.range(0));
 		error = answer - result;
 
 		auto end = std::chrono::high_resolution_clock::now();
@@ -56,7 +56,7 @@ static void BM_GpuDot(benchmark::State& state)
 
 		state.SetIterationTime(elapsed_seconds.count());
 	}
-	std::cout << "Gpu Dot "<< state.range(0) <<" Error: "<<error<<"\n";
+	std::cout << "Gpu Dot "<< state.range(0) <<" Error: "<<error<< " CPU value: "<<answer<<" GPU value: "<< result << "\n";
 }
 BENCHMARK(BM_GpuDot)->Range(fromRange, toRange);
 

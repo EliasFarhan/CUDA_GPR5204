@@ -29,7 +29,7 @@ foreach(course_file ${COURSE_FILES} )
     # I used a simple string replace, to cut off .cpp.
     file(RELATIVE_PATH course_relative_path ${COURSE_DIR} ${course_file})
     string( REPLACE ".cpp" "" course_name ${course_relative_path} )
-    add_executable(${course_name} ${course_file} ${SRC_FILES} ${COURSE_GRAPHICS_FILES} tests/test_cuda.cpp)
+    add_executable(${course_name} ${course_file} ${SRC_FILES})
     # Make sure YourLib is linked to each app
     target_link_libraries(${course_name} PUBLIC benchmark)
 	
