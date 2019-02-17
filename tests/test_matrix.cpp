@@ -29,6 +29,8 @@ SOFTWARE.
 #include "benchmark/benchmark.h"
 #include <dot.h>
 
+#include <chrono>
+
 class Matrix
 {
 public:
@@ -41,7 +43,7 @@ public:
 	{
 		for (auto& v : values)
 		{
-			v = static_cast<float>(rand());
+			v = static_cast<float>(rand()%1000)/100.0f;
 		}
 	}
 
@@ -129,6 +131,42 @@ public:
 		  return Matrix(0, 0);
 	  }
 	}
+	Matrix operator+(const Matrix& m2) const
+	{
+		if(width == m2.width && height == m2.height)
+		{
+			Matrix newMatrix(width, height);
+			for(int i = 0; i < width*height;i++)
+			{
+				newMatrix.values[i] = values[i]+m2.values[i];
+			}
+			return newMatrix;
+		}
+		return Matrix(0,0);
+	}
+	Matrix operator-(const Matrix& m2) const
+	{
+		if(width == m2.width && height == m2.height)
+		{
+			Matrix newMatrix(width, height);
+			for(int i = 0; i < width*height;i++)
+			{
+				newMatrix.values[i] = values[i]-m2.values[i];
+			}
+			return newMatrix;
+		}
+		return Matrix(0,0);
+	}
+
+	float ValuesSum()
+	{
+		float sum = 0.0f;
+		for(int i = 0; i < width*height;i++)
+		{
+			sum+=values[i];
+		}
+		return sum;
+	}
 
 
 private:
@@ -152,11 +190,12 @@ static void BM_MatrixMult(benchmark::State& state)
 		benchmark::DoNotOptimize(m1.Mult(m2));
 	}
 }
-BENCHMARK(BM_MatrixMult)->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512, 512})->Args({1024, 1024});
+BENCHMARK(BM_MatrixMult)->Args ({16,16})->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512, 512})->Args({1024, 1024});
 
 
 static void BM_MatrixMultOptimize(benchmark::State& state) {
-	
+	float error = 0.0f;
+	int iteration = 0;
 	for (auto _ : state)
 	{
 		state.PauseTiming();
@@ -167,13 +206,22 @@ static void BM_MatrixMultOptimize(benchmark::State& state) {
 		state.ResumeTiming();
 
 		const Matrix m2T = m2.Transpose();
-		benchmark::DoNotOptimize(m1.MultOptimize(m2T));
+		const Matrix matrixResult = m1.MultOptimize(m2T);
+
+		state.PauseTiming();
+		error += (matrixResult - (m1.Mult(m2))).ValuesSum();
+		iteration++;
+		state.ResumeTiming();
 	}
+
+	std::cout<<"Cpu Transpose Mult average error: "<<(error/iteration)<<"\n";
 }
-BENCHMARK(BM_MatrixMultOptimize)->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512, 512})->Args({1024, 1024});
+BENCHMARK(BM_MatrixMultOptimize)->Args ({16, 16})->Args ({64,64})->Args({128,128})->Args({256,256})->Args({512, 512})->Args({1024, 1024});
 
 static void BM_MatrixMultGpu(benchmark::State& state) {
 
+	float error = 0.0f;
+	int iteration = 0;
 	for (auto _ : state)
 	{
 		state.PauseTiming();
@@ -182,12 +230,26 @@ static void BM_MatrixMultGpu(benchmark::State& state) {
 		Matrix m2(state.range(1) + 1, state.range(0) + 1);
 		m2.Prefill();
 		state.ResumeTiming();
-
+		auto start = std::chrono::high_resolution_clock::now();
 		const Matrix m2T = m2.Transpose();
-		benchmark::DoNotOptimize(m1.MultGpu(m2T));
+		const Matrix matrixResult = m1.MultGpu(m2T);
+		benchmark::DoNotOptimize(matrixResult);
+		auto end = std::chrono::high_resolution_clock::now();
+
+		auto elapsed_seconds =
+				std::chrono::duration_cast<std::chrono::duration<double>>(
+						end - start);
+
+		state.SetIterationTime(elapsed_seconds.count());
+
+		state.PauseTiming();
+		error += (matrixResult - (m1.Mult(m2))).ValuesSum();
+		iteration ++;
+		state.ResumeTiming();
 	}
+	std::cout<<"Gpu Mult error average: "<<(error/iteration) <<"\n";
 }
-BENCHMARK(BM_MatrixMultGpu)->Args({ 64,64 })->Args({ 128,128 })->Args({ 256,256 })->Args({ 512, 512 })->Args({ 1024, 1024 });
+BENCHMARK(BM_MatrixMultGpu)->Args ({16,16})->Args({ 64,64 })->Args({ 128,128 })->Args({ 256,256 })->Args({ 512, 512 })->Args({ 1024, 1024 });
 
 
 BENCHMARK_MAIN();
