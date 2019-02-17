@@ -28,7 +28,7 @@ SOFTWARE.
 #include <functional>
 #include "benchmark/benchmark.h"
 #include <dot.h>
-
+#include <matrix.h>
 #include <chrono>
 
 class Matrix
